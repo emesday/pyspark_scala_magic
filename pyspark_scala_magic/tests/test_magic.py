@@ -14,3 +14,12 @@ class TestMagic(unittest.TestCase):
         x = 100
         res = scala("val x = {{ x }}; println(x)")
         self.assertEqual(res, "100")
+
+    def test_udf_plus1(self):
+        scala('''val plus1 = udf { x: Int => x + 1 }; spark.udf.register("plus1", plus1)''')
+        from pyspark.sql.functions import expr
+        res = self.spark.createDataFrame(range(10), "int").select(expr('plus1(value) value')).collect()
+        res = [x.value for x in res]
+        self.assertListEqual(res, list(range(1, 11)))
+
+
